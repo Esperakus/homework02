@@ -13,10 +13,10 @@ provider "yandex" {
   zone      = var.zone
   token     = var.yc_token
 }
-provider "tls" {}
+#provider "tls" {}
 
 resource "yandex_compute_instance" "nginx" {
-  count = 2
+  count    = 2
   name     = "nginx-${count.index}"
   hostname = "nginx-${count.index}"
 
@@ -36,78 +36,83 @@ resource "yandex_compute_instance" "nginx" {
     nat       = true
   }
 
+#  network_interface {
+#    subnet_id = yandex_vpc_subnet.subnet01.id
+#    nat       = true
+#  }
+
   metadata = {
     ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
-#    ssh-keys = "inner-user:"
-#    users:
-#      - name: inner
-#      - groups: sudo
-#      - shell: /bin/bash
-#      - ssh_authorized_keys
   }
 
   connection {
     type        = "ssh"
     user        = "cloud-user"
-    private_key = "${file("~/.ssh/id_rsa")}"
+    private_key = file("~/.ssh/id_rsa")
     host        = self.network_interface.0.nat_ip_address
   }
 
   provisioner "remote-exec" {
     inline = ["echo 'Nginx is up'"]
   }
+
+  #    provisioner "local-exec" {
+  #    command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa nginx.yml"
+  #  }
 }
 
-resource "yandex_compute_instance" "php-fpm" {
 
-  count = 3
-  name = "php-${count.index}"
-  hostname = "php-${count.index}"
-
-  resources {
-    cores  = 2
-    memory = 2
-  }
-
-  boot_disk {
-    initialize_params {
-      image_id = var.image_id
-    }
-  }
-
-  network_interface {
-    subnet_id = yandex_vpc_subnet.subnet01.id
-  }
-
-  metadata = {
-    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
-  }
-}
-
-resource "yandex_compute_instance" "db" {
-
-  name = "db"
-  hostname = "db"
-
-  resources {
-    cores  = 2
-    memory = 4
-  }
-
-  boot_disk {
-    initialize_params {
-      image_id = var.image_id
-    }
-  }
-
-  network_interface {
-    subnet_id = yandex_vpc_subnet.subnet01.id
-  }
-
-  metadata = {
-    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
-  }
-}
+#resource "yandex_compute_instance" "php-fpm" {
+#
+#  count = 3
+#  name = "php-${count.index}"
+#  hostname = "php-${count.index}"
+#
+#  resources {
+#    cores  = 2
+#    memory = 2
+#  }
+#
+#  boot_disk {
+#    initialize_params {
+#      image_id = var.image_id
+#    }
+#  }
+#
+#  network_interface {
+#    subnet_id = yandex_vpc_subnet.subnet01.id
+#    nat = true
+#  }
+#
+#  metadata = {
+#    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
+#  }
+#}
+#
+#resource "yandex_compute_instance" "db" {
+#
+#  name = "db"
+#  hostname = "db"
+#
+#  resources {
+#    cores  = 2
+#    memory = 4
+#  }
+#
+#  boot_disk {
+#    initialize_params {
+#      image_id = var.image_id
+#    }
+#  }
+#
+#  network_interface {
+#    subnet_id = yandex_vpc_subnet.subnet01.id
+#  }
+#
+#  metadata = {
+#    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
+#  }
+#}
 
 resource "yandex_vpc_network" "net01" {
   name = "net01"
@@ -126,17 +131,17 @@ resource "tls_private_key" "ssh" {
 }
 
 output "internal_ip_address_nginx" {
- value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
+  value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
 }
 
-output "internal_ip_address_php" {
- value = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
-}
-
-output "internal_ip_address_db" {
- value = yandex_compute_instance.db.*.network_interface.0.ip_address
-}
+#output "internal_ip_address_php" {
+# value = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
+#}
+#
+#output "internal_ip_address_db" {
+# value = yandex_compute_instance.db.*.network_interface.0.ip_address
+#}
 
 output "external_ip_address_nginx" {
- value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
+  value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
 }

@@ -1,0 +1,31 @@
+---
+- name: Install nginx
+  hosts: all
+  become: true
+  tasks:
+
+  - name: set timezone msk
+    timezone:
+      name: Europe/Moscow
+
+  - name: Update all packages
+    dnf:
+      name: "*"
+      state: latest
+      update_cache: yes
+
+  - name: Install nginx
+    dnf:
+      name: nginx
+      state: latest
+
+  - name: add load balance nginx conf
+    template:
+      src: lb.conf
+      dest: "/etc/nginx/conf.d/lb.conf"
+
+  - name: Enable nginx
+    systemd:
+      name: nginx
+      state: restarted
+      enabled: yes
