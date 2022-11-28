@@ -16,9 +16,8 @@ provider "yandex" {
 #provider "tls" {}
 
 resource "yandex_compute_instance" "nginx" {
-  count    = 2
-  name     = "nginx-${count.index}"
-  hostname = "nginx-${count.index}"
+  name     = "nginx"
+  hostname = "nginx"
 
   resources {
     cores  = 2
@@ -36,11 +35,6 @@ resource "yandex_compute_instance" "nginx" {
     nat       = true
   }
 
-#  network_interface {
-#    subnet_id = yandex_vpc_subnet.subnet01.id
-#    nat       = true
-#  }
-
   metadata = {
     ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
   }
@@ -56,11 +50,10 @@ resource "yandex_compute_instance" "nginx" {
     inline = ["echo 'Nginx is up'"]
   }
 
-  #    provisioner "local-exec" {
-  #    command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa nginx.yml"
-  #  }
+#  provisioner "local-exec" {
+#      command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa nginx.yml"
+#    }
 }
-
 
 #resource "yandex_compute_instance" "php-fpm" {
 #
@@ -87,6 +80,21 @@ resource "yandex_compute_instance" "nginx" {
 #  metadata = {
 #    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
 #  }
+#
+#   connection {
+#    type        = "ssh"
+#    user        = "cloud-user"
+#    private_key = file("~/.ssh/id_rsa")
+#    host        = self.network_interface.0.nat_ip_address
+#  }
+#
+#  provisioner "remote-exec" {
+#    inline = ["echo 'php is up'"]
+#  }
+#
+#  provisioner "local-exec" {
+#      command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa php.yml"
+#  }
 #}
 #
 #resource "yandex_compute_instance" "db" {
@@ -107,6 +115,7 @@ resource "yandex_compute_instance" "nginx" {
 #
 #  network_interface {
 #    subnet_id = yandex_vpc_subnet.subnet01.id
+#    nat = true
 #  }
 #
 #  metadata = {
@@ -116,6 +125,7 @@ resource "yandex_compute_instance" "nginx" {
 
 resource "yandex_vpc_network" "net01" {
   name = "net01"
+
 }
 
 resource "yandex_vpc_subnet" "subnet01" {
@@ -125,10 +135,10 @@ resource "yandex_vpc_subnet" "subnet01" {
   v4_cidr_blocks = ["192.168.100.0/24"]
 }
 
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = "4096"
-}
+#resource "tls_private_key" "ssh" {
+#  algorithm = "RSA"
+#  rsa_bits  = "4096"
+#}
 
 output "internal_ip_address_nginx" {
   value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
@@ -145,3 +155,11 @@ output "internal_ip_address_nginx" {
 output "external_ip_address_nginx" {
   value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
 }
+
+#output "external_ip_address_php" {
+#  value = yandex_compute_instance.php-fpm.*.network_interface.0.nat_ip_address
+#}
+#
+#output "external_ip_address_db" {
+#  value = yandex_compute_instance.db.*.network_interface.0.nat_ip_address
+#}
