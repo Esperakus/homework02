@@ -20,5 +20,5 @@ variable "image_id" {
 
 variable "yc_token" {
   type    = string
-  default = "t1.9euelZrLlM-Ml8majYmbz8-QkIyZnO3rnpWans6UkJTKnpuOjYvGjI6NyZLl9PdzNGlj-e9dAG_j3fT3M2NmY_nvXQBv483n9euelZqcksaUjM_PmM6UzZjGiZmSme_9.og7LrrBIZddhMG9C6jYdysgVpzmx878uGVWEQtaL77jTcZ07rnNfM2QLIEkXyNgY5oVRkRtrPgHG7uJI_fRDDA"
+  default = "t1.9euelZrIyI6QmI-Ny5SNic-cysjGzu3rnpWans6UkJTKnpuOjYvGjI6NyZLl8_d9EmRj-e95JAtr_N3z9z1BYWP573kkC2v8zef1656VmpySxpSMz8-YzpTNmMaJmZKZ7_0.ATKu5mjhgMUlp_ne9pGY7XQSxvy-Qf3MhYlHaYZdTWTncRkPLNic5vUav0LoW69mvQ8EhMjIH0SZyDlVQ4mWAg"
 }
