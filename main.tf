@@ -11,13 +11,14 @@ terraform {
   }
 }
 
+
 provider "yandex" {
   cloud_id  = var.cloud_id
   folder_id = var.folder_id
   zone      = var.zone
   token     = var.yc_token
 }
-# provider "tls" {}
+provider "tls" {}
 
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
@@ -39,6 +40,19 @@ resource "local_file" "public_ssh" {
 #data "template_file" "user_data" {
 #  template = file("user_data.yml")
 #}
+
+resource "local_file" "hosts" {
+  filename = "ansible/hosts"
+  content = templatefile("hosts.tpl",
+    {
+      php_workers = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
+      nginx_workers = yandex_compute_instance.vm-1.*.network_interface.0.ip_address
+    })
+  depends_on = [
+    yandex_compute_instance.vm-1,
+    yandex_compute_instance.php-fpm,
+  ]
+}
 
 resource "yandex_compute_instance" "vm-1" {
   name     = "ansible"
@@ -83,6 +97,7 @@ resource "yandex_compute_instance" "vm-1" {
   provisioner "file" {
     source      = "ansible"
     destination = "/home/cloud-user"
+    # depends_on = local_file.hosts
   }
 
   provisioner "file" {
@@ -101,13 +116,6 @@ resource "yandex_compute_instance" "vm-1" {
       "chmod 600 /home/cloud-user/.ssh/id_rsa"
     ]
 
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      
-    ]
-    
   }
 
   #  provisioner "local-exec" {
@@ -192,6 +200,22 @@ resource "yandex_vpc_subnet" "subnet01" {
   zone           = var.zone
   network_id     = yandex_vpc_network.net01.id
   v4_cidr_blocks = ["192.168.100.0/24"]
+  route_table_id = yandex_vpc_route_table.rt.id
+}
+
+resource "yandex_vpc_gateway" "nat_gateway" {
+  name = "test-gateway"
+  shared_egress_gateway {}
+}
+
+resource "yandex_vpc_route_table" "rt" {
+  name       = "route-table"
+  network_id = yandex_vpc_network.net01.id
+
+  static_route {
+    destination_prefix = "0.0.0.0/0"
+    gateway_id         = yandex_vpc_gateway.nat_gateway.id
+  }
 }
 
 output "internal_ip_address_vm-1" {
