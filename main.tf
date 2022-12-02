@@ -45,9 +45,9 @@ resource "local_file" "hosts" {
   filename = "ansible/hosts"
   content = templatefile("hosts.tpl",
     {
-      php_workers = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
+      php_workers   = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
       nginx_workers = yandex_compute_instance.vm-1.*.network_interface.0.ip_address
-    })
+  })
   depends_on = [
     yandex_compute_instance.vm-1,
     yandex_compute_instance.php-fpm,
@@ -101,6 +101,11 @@ resource "yandex_compute_instance" "vm-1" {
   }
 
   provisioner "file" {
+    source      = "ansible/hosts"
+    destination = "/home/cloud-user/ansible/"
+  }
+
+  provisioner "file" {
     source      = "id_rsa"
     destination = "/home/cloud-user/.ssh/id_rsa"
 
@@ -118,9 +123,13 @@ resource "yandex_compute_instance" "vm-1" {
 
   }
 
-  #  provisioner "local-exec" {
-  #    command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key id_rsa nginx.yml"
-  #  }
+  provisioner "remote-exec" {
+    # command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key id_rsa nginx.yml"
+    inline = [
+      "ansible-playbook -u cloud-user -i /home/cloud-user/ansible/hosts /home/cloud-user/ansible/general.yml"
+    ]
+    depends_on 
+  }
 }
 
 resource "yandex_compute_instance" "php-fpm" {
@@ -190,6 +199,22 @@ resource "yandex_compute_instance" "php-fpm" {
 #    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
 #  }
 #}
+
+resource "null_resource" "copy_inventory" {
+
+	triggers = {
+		mytest = timestamp()
+	}
+
+	provisioner "local-exec" {
+	    command = "scp -i id_rsa ./ansible/hosts cloud-user@${external_ip_address_vm}:/home/cloud-user/ansible/"
+      
+            
+	  }
+	depends_on = [ 
+			local_file.hosts
+			]
+}
 
 resource "yandex_vpc_network" "net01" {
   name = "net01"
