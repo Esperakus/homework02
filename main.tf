@@ -37,24 +37,23 @@ resource "local_file" "public_ssh" {
   file_permission = "0600"
 }
 
-#data "template_file" "user_data" {
-#  template = file("user_data.yml")
-#}
-
 resource "local_file" "hosts" {
   filename = "ansible/hosts"
   content = templatefile("hosts.tpl",
     {
       php_workers   = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
-      nginx_workers = yandex_compute_instance.vm-1.*.network_interface.0.ip_address
+      nginx_workers = yandex_compute_instance.nginx.*.network_interface.0.ip_address
+      db_workers    = yandex_compute_instance.db.*.network_interface.0.ip_address
   })
   depends_on = [
-    yandex_compute_instance.vm-1,
+    yandex_compute_instance.nginx,
     yandex_compute_instance.php-fpm,
+    yandex_compute_instance.db,
   ]
 }
 
-resource "yandex_compute_instance" "vm-1" {
+resource "yandex_compute_instance" "ansible" {
+
   name     = "ansible"
   hostname = "ansible"
 
@@ -97,12 +96,7 @@ resource "yandex_compute_instance" "vm-1" {
   provisioner "file" {
     source      = "ansible"
     destination = "/home/cloud-user"
-    # depends_on = local_file.hosts
-  }
 
-  provisioner "file" {
-    source      = "ansible/hosts"
-    destination = "/home/cloud-user/ansible/"
   }
 
   provisioner "file" {
@@ -128,15 +122,19 @@ resource "yandex_compute_instance" "vm-1" {
     inline = [
       "ansible-playbook -u cloud-user -i /home/cloud-user/ansible/hosts /home/cloud-user/ansible/general.yml"
     ]
-    depends_on 
   }
+  depends_on = [
+    yandex_compute_instance.nginx,
+    yandex_compute_instance.php-fpm,
+    yandex_compute_instance.db,
+  ]
 }
 
-resource "yandex_compute_instance" "php-fpm" {
+resource "yandex_compute_instance" "nginx" {
 
   count    = 2
-  name     = "php-${count.index}"
-  hostname = "php-${count.index}"
+  name     = "nginx${count.index}"
+  hostname = "nginx${count.index}"
 
   resources {
     cores  = 2
@@ -174,47 +172,86 @@ resource "yandex_compute_instance" "php-fpm" {
   #  }
 }
 
-#resource "yandex_compute_instance" "db" {
-#
-#  name = "db"
-#  hostname = "db"
-#
-#  resources {
-#    cores  = 2
-#    memory = 4
-#  }
-#
-#  boot_disk {
-#    initialize_params {
-#      image_id = var.image_id
-#    }
-#  }
-#
-#  network_interface {
-#    subnet_id = yandex_vpc_subnet.subnet01.id
-#    nat = true
-#  }
-#
-#  metadata = {
-#    ssh-keys = "cloud-user:${file("~/.ssh/id_rsa.pub")}"
-#  }
-#}
+resource "yandex_compute_instance" "php-fpm" {
 
-resource "null_resource" "copy_inventory" {
+  count    = 2
+  name     = "php${count.index}"
+  hostname = "php${count.index}"
 
-	triggers = {
-		mytest = timestamp()
-	}
+  resources {
+    cores  = 2
+    memory = 2
+  }
 
-	provisioner "local-exec" {
-	    command = "scp -i id_rsa ./ansible/hosts cloud-user@${external_ip_address_vm}:/home/cloud-user/ansible/"
-      
-            
-	  }
-	depends_on = [ 
-			local_file.hosts
-			]
+  boot_disk {
+    initialize_params {
+      image_id = var.image_id
+    }
+  }
+
+  network_interface {
+    subnet_id = yandex_vpc_subnet.subnet01.id
+    # nat       = true
+  }
+
+  metadata = {
+    ssh-keys = "cloud-user:${tls_private_key.ssh.public_key_openssh}"
+  }
+
+  # connection {
+  #   type        = "ssh"
+  #   user        = "cloud-user"
+  #   private_key = tls_private_key.ssh.private_key_pem
+  #   host        = self.network_interface.0.nat_ip_address
+  # }
+
+  # provisioner "remote-exec" {
+  #   inline = ["echo 'php is up'"]
+  # }
+
+  #  provisioner "local-exec" {
+  #      command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa php.yml"
+  #  }
 }
+
+resource "yandex_compute_instance" "db" {
+
+  name     = "db"
+  hostname = "db"
+
+  resources {
+    cores  = 2
+    memory = 4
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.image_id
+    }
+  }
+
+  network_interface {
+    subnet_id = yandex_vpc_subnet.subnet01.id
+    nat       = true
+  }
+
+  metadata = {
+    ssh-keys = "cloud-user:${tls_private_key.ssh.public_key_openssh}"
+  }
+}
+
+# resource "null_resource" "copy_inventory" {
+
+# 	triggers = {
+# 		mytest = timestamp()
+# 	}
+
+# 	provisioner "local-exec" {
+# 	    command = "scp -i id_rsa ./ansible/hosts cloud-user@${external_ip_address_vm}:/home/cloud-user/ansible/"
+
+
+# 	  }
+#}
 
 resource "yandex_vpc_network" "net01" {
   name = "net01"
@@ -229,7 +266,7 @@ resource "yandex_vpc_subnet" "subnet01" {
 }
 
 resource "yandex_vpc_gateway" "nat_gateway" {
-  name = "test-gateway"
+  name = "gateway01"
   shared_egress_gateway {}
 }
 
@@ -243,40 +280,19 @@ resource "yandex_vpc_route_table" "rt" {
   }
 }
 
-output "internal_ip_address_vm-1" {
-  value = yandex_compute_instance.vm-1.*.network_interface.0.ip_address
+output "internal_ip_address_nginx" {
+  value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
 }
 
-output "external_ip_address_vm-1" {
-  value = yandex_compute_instance.vm-1.*.network_interface.0.nat_ip_address
+output "external_ip_address_nginx" {
+  value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
 }
 
-#output "internal_ip_address_php" {
-# value = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
-#}
+output "internal_ip_address_php" {
+  value = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
+}
 
-#output "external_ip_address_php" {
-#  value = yandex_compute_instance.php-fpm.*.network_interface.0.nat_ip_address
-#}
 
-#output "external_ip_address_db" {
-#  value = yandex_compute_instance.db.*.network_interface.0.nat_ip_address
-#}
-
-#output "internal_ip_address_db" {
-# value = yandex_compute_instance.db.*.network_interface.0.ip_address
-#}
-
-#output "public_ssh" {
-#  value = tls_private_key.ssh.public_key_pem
-#}
-#
-#output "private_ssh" {
-#  value = tls_private_key.ssh.private_key_pem
-#  sensitive = true
-#}
-#
-#output "public_ssh_fingerprint" {
-#  value = tls_private_key.ssh.public_key_fingerprint_md5
-##  sensitive = true
-#}
+output "internal_ip_address_db" {
+  value = yandex_compute_instance.db.*.network_interface.0.ip_address
+}
