@@ -14,7 +14,7 @@ variable "folder_id" {
 }
 
 variable "image_id" {
-  type    = string
+  type = string
   # default = "fd8ibluloco5r4ku4bgg" #alma
   default = "fd816jiq3n13qtli6fh3"
 }

@@ -1,0 +1,37 @@
+---
+  - name: Add nginx repo
+    become: true
+    yum_repository:
+      name: nginx-stable
+      description: nginx repo
+      file: nginx-stable
+      baseurl: http://nginx.org/packages/centos/$releasever/$basearch/
+      gpgkey: https://nginx.org/keys/nginx_signing.key
+      gpgcheck: yes
+      enabled: yes
+
+  - name: add line to nginx repo
+    become: true
+    lineinfile:
+      path: /etc/yum.repos.d/nginx-stable.repo
+      line: module_hotfixes=true
+      state: present
+
+  - name: install nginx
+    become: true
+    yum:
+      name: nginx
+      state: present
+    notify:
+      - nginx systemd
+
+  - name: firewall add services
+    become: true
+    firewalld:
+      service: "{{ item }}"
+      permanent: true
+      state: enabled
+      immediate: yes
+    loop:
+      - http
+      - https

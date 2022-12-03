@@ -1,0 +1,21 @@
+---
+- hosts: all
+
+  roles:
+    - general-el8
+    # - selinux
+
+- hosts: nginx_hosts
+
+  roles:
+   - nginx
+
+# - hosts: backend_hosts
+
+#   roles:
+#    - php-fpm_el8
+
+# - hosts: db_hosts
+
+#   roles:
+#    - postgresql-ol8

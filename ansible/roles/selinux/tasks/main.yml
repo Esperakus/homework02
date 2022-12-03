@@ -1,0 +1,15 @@
+---
+# tasks file for selinux
+#
+
+- name: Install the libselinux-python package
+  dnf: 
+    name: python3-libselinux
+    state: present
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: setenforce 0
+  command: /usr/sbin/setenforce 0

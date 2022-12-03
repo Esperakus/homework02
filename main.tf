@@ -126,7 +126,7 @@ resource "yandex_compute_instance" "ansible" {
   provisioner "remote-exec" {
     # command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key id_rsa nginx.yml"
     inline = [
-      "ansible-playbook -u cloud-user -i /home/cloud-user/ansible/hosts /home/cloud-user/ansible/general.yml"
+      "ansible-playbook -u cloud-user -i /home/cloud-user/ansible/hosts /home/cloud-user/ansible/playbooks/main.yml"
     ]
   }
   depends_on = [
