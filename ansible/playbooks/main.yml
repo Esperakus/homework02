@@ -3,6 +3,7 @@
 
   roles:
     - general-el8
+    - become: yes
     # - selinux
 
 - hosts: nginx_hosts

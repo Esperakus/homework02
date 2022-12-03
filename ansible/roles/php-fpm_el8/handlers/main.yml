@@ -1,0 +1,6 @@
+---
+- name: php-fpm systemd
+  systemd:
+    name: php-fpm
+    enabled: yes
+    state: started

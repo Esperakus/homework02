@@ -1,0 +1,71 @@
+---
+# tasks file for postgresql
+
+  - name: Install postgres repo
+    dnf:
+      name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+      state: present
+      disable_gpg_check: yes
+
+  - name: disable default repo
+    command: dnf -qy module disable postgresql
+
+  - name: install psycopg2 2ndquadrant
+    dnf:
+      name: "{{ packages }}"
+      state: present
+    vars:
+      packages:
+        - python3-psycopg2
+        - repmgr13
+#        - barman
+#        - barman-cli
+
+  - name: install pgsql13
+    dnf:
+      name: postgresql13-server
+      state: present
+      disable_gpg_check: yes
+
+  - name: Check initdb
+    stat: path="/var/lib/pgsql/13/data/base/"
+    register: pgdata
+
+  - name: pgsql initdb
+    command:  /usr/pgsql-13/bin/postgresql-13-setup initdb
+    when: not pgdata.stat.exists
+
+  - name: pgsql service start
+    service:
+      name: postgresql-13
+      state: started
+      enabled: yes
+
+#  - name: Create a new database with name "zabbix"
+#    postgresql_db:
+#      name: zabbix
+
+#  - name: create pgsql user
+#    become: yes
+#    become_user: postgres
+#    postgresql_user:
+#      name: zabbix
+#      password: zabbix
+#      state: present
+
+#  - name: create zbx-monitor user
+#    become: yes
+#    become_user: postgres
+#    postgresql_user:
+#      name: zbx_monitor
+#      password: zbx_monitor
+#      state: present
+#      priv: pg_monitor
+#      db: team_sokolov_net
+
+#  - name: firewall add pgsql service
+#    firewalld:
+#      service: postgresql
+#      permanent: yes
+#      state: enabled
+#      immediate: yes
