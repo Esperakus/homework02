@@ -5,3 +5,6 @@ terraform.tfstate.backup
 .idea
 /.terraform.tfstate.lock.info
 /*.swp
+id_rsa
+id_rsa.pub
+/ansible/hosts
