@@ -13,4 +13,11 @@
       name: "*"
       state: latest
       update_cache: yes
-
+  
+  - name: install packages
+    dnf:
+      name: "{{ items }}"
+      state: present
+      with-items:
+        - bash-completion
+        - mc

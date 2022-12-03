@@ -117,6 +117,12 @@ resource "yandex_compute_instance" "ansible" {
 
   }
 
+  provisioner "file" {
+    source      = "./ansible/ansible.cfg"
+    destination = "/home/cloud-user/ansible.cfg"
+
+  }
+
   provisioner "remote-exec" {
     # command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key id_rsa nginx.yml"
     inline = [
@@ -149,27 +155,13 @@ resource "yandex_compute_instance" "nginx" {
 
   network_interface {
     subnet_id = yandex_vpc_subnet.subnet01.id
-    # nat       = true
+    nat       = true
   }
 
   metadata = {
     ssh-keys = "cloud-user:${tls_private_key.ssh.public_key_openssh}"
   }
 
-  # connection {
-  #   type        = "ssh"
-  #   user        = "cloud-user"
-  #   private_key = tls_private_key.ssh.private_key_pem
-  #   host        = self.network_interface.0.nat_ip_address
-  # }
-
-  # provisioner "remote-exec" {
-  #   inline = ["echo 'php is up'"]
-  # }
-
-  #  provisioner "local-exec" {
-  #      command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa php.yml"
-  #  }
 }
 
 resource "yandex_compute_instance" "php-fpm" {
@@ -198,20 +190,6 @@ resource "yandex_compute_instance" "php-fpm" {
     ssh-keys = "cloud-user:${tls_private_key.ssh.public_key_openssh}"
   }
 
-  # connection {
-  #   type        = "ssh"
-  #   user        = "cloud-user"
-  #   private_key = tls_private_key.ssh.private_key_pem
-  #   host        = self.network_interface.0.nat_ip_address
-  # }
-
-  # provisioner "remote-exec" {
-  #   inline = ["echo 'php is up'"]
-  # }
-
-  #  provisioner "local-exec" {
-  #      command = "ansible-playbook -u cloud-user -i '${self.network_interface.0.nat_ip_address},' --private-key ~/.ssh/id_rsa php.yml"
-  #  }
 }
 
 resource "yandex_compute_instance" "db" {
@@ -232,7 +210,7 @@ resource "yandex_compute_instance" "db" {
 
   network_interface {
     subnet_id = yandex_vpc_subnet.subnet01.id
-    nat       = true
+
   }
 
   metadata = {
@@ -280,6 +258,11 @@ resource "yandex_vpc_route_table" "rt" {
   }
 }
 
+
+output "external_ip_address_ansible" {
+  value = yandex_compute_instance.ansible.*.network_interface.0.nat_ip_address
+}
+
 output "internal_ip_address_nginx" {
   value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
 }
@@ -296,3 +279,34 @@ output "internal_ip_address_php" {
 output "internal_ip_address_db" {
   value = yandex_compute_instance.db.*.network_interface.0.ip_address
 }
+
+# resource "null_resource" "copy_ansible" {
+#   depends_on = [
+#     yandex_compute_instance.nginx,
+#     yandex_compute_instance.php-fpm,
+#     yandex_compute_instance.db,
+#     yandex_compute_instance.ansible
+#   ]
+
+#   provisioner "local-exec" {
+#     command = "rsync -avzhP ./ansible/ ${yandex_compute_instance.ansible.network_interface.0.nat_ip_address}:/root/ansible/"
+#   }
+# }
+
+# resource "null_resource" "start_ansible" {
+#   depends_on = [
+#     null_resource.copy_ansible
+#   ]
+
+#   connection {
+#     type        = "ssh"
+#     user        = "cloud-user"
+#     private_key = tls_private_key.ssh.private_key_pem
+#     host        = yandex_compute_instance.ansible.network_interface.0.nat_ip_address
+#   }
+#   provisioner "remote-exec" {
+#     inline = [
+#       "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /home/cloud-user/ansible/hosts -u cloud-user /home/cloud-user/ansible/general.yml"
+#     ]
+#   }
+# }

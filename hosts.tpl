@@ -7,3 +7,8 @@ ${ip}
 %{ for ip in php_workers ~}
 ${ip}
 %{ endfor ~}
+
+[db_hosts]
+%{ for ip in db_workers ~}
+${ip}
+%{ endfor ~}
