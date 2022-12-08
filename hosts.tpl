@@ -3,8 +3,8 @@
 ${ip}
 %{ endfor ~}
 
-[php_hosts]
-%{ for ip in php_workers ~}
+[backend_hosts]
+%{ for ip in backend_workers ~}
 ${ip}
 %{ endfor ~}
 

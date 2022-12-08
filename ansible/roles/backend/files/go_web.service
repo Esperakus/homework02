@@ -1,0 +1,11 @@
+[Unit]
+Description=simple go web server
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/simple_http
+
+[Install]
+WantedBy=multi-user.target

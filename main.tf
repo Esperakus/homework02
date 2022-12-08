@@ -41,13 +41,13 @@ resource "local_file" "hosts" {
   filename = "ansible/hosts"
   content = templatefile("hosts.tpl",
     {
-      php_workers   = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
-      nginx_workers = yandex_compute_instance.nginx.*.network_interface.0.ip_address
-      db_workers    = yandex_compute_instance.db.*.network_interface.0.ip_address
+      backend_workers = yandex_compute_instance.backend.*.network_interface.0.ip_address
+      nginx_workers   = yandex_compute_instance.nginx.*.network_interface.0.ip_address
+      db_workers      = yandex_compute_instance.db.*.network_interface.0.ip_address
   })
   depends_on = [
     yandex_compute_instance.nginx,
-    yandex_compute_instance.php-fpm,
+    yandex_compute_instance.backend,
     yandex_compute_instance.db,
   ]
 }
@@ -129,9 +129,10 @@ resource "yandex_compute_instance" "ansible" {
       "ansible-playbook -u cloud-user -i /home/cloud-user/ansible/hosts /home/cloud-user/ansible/playbooks/main.yml"
     ]
   }
+
   depends_on = [
     yandex_compute_instance.nginx,
-    yandex_compute_instance.php-fpm,
+    yandex_compute_instance.backend,
     yandex_compute_instance.db,
   ]
 }
@@ -164,11 +165,11 @@ resource "yandex_compute_instance" "nginx" {
 
 }
 
-resource "yandex_compute_instance" "php-fpm" {
+resource "yandex_compute_instance" "backend" {
 
   count    = 2
-  name     = "php${count.index}"
-  hostname = "php${count.index}"
+  name     = "backend${count.index}"
+  hostname = "backend${count.index}"
 
   resources {
     cores  = 2
@@ -271,8 +272,8 @@ output "external_ip_address_nginx" {
   value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
 }
 
-output "internal_ip_address_php" {
-  value = yandex_compute_instance.php-fpm.*.network_interface.0.ip_address
+output "internal_ip_address_backend" {
+  value = yandex_compute_instance.backend.*.network_interface.0.ip_address
 }
 
 

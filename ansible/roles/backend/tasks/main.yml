@@ -1,0 +1,21 @@
+---
+# tasks file for backend
+
+
+  - name: copy http-server
+    copy:
+      src: ../files/simple_http
+      dest: /usr/bin/simple_http
+      mode: 0755
+
+  - name: copy service file
+    copy:
+      src: ../files/go_web.service
+      dest: /lib/systemd/system/go_web.service
+
+  - name: start go_web
+    systemd:
+      name: go_web.service
+      state: restarted
+      enabled: yes
+      daemon_reload: yes

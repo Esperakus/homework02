@@ -10,16 +10,13 @@
   - name: disable default repo
     command: dnf -qy module disable postgresql
 
-  - name: install psycopg2 2ndquadrant
+  - name: install psycopg2
     dnf:
       name: "{{ packages }}"
       state: present
     vars:
       packages:
         - python3-psycopg2
-        - repmgr13
-#        - barman
-#        - barman-cli
 
   - name: install pgsql13
     dnf:
@@ -35,33 +32,40 @@
     command:  /usr/pgsql-13/bin/postgresql-13-setup initdb
     when: not pgdata.stat.exists
 
+  - name: copy config
+    copy:
+      src: ../files/postgresql.conf
+      dest: /var/lib/pgsql/13/data/postgresql.conf
+      owner: postgres
+      group: postgres
+
+  - name: copy pg_hba
+    copy:
+      src: ../files/pg_hba.conf
+      dest: /var/lib/pgsql/13/data/pg_hba.conf
+      owner: postgres
+      group: postgres
+
   - name: pgsql service start
     service:
       name: postgresql-13
       state: started
       enabled: yes
 
-#  - name: Create a new database with name "zabbix"
-#    postgresql_db:
-#      name: zabbix
+  - name: create pgsql user
+    become: true
+    become_user: postgres
+    postgresql_user:
+      name: test
+      password: test
+      state: present
 
-#  - name: create pgsql user
-#    become: yes
-#    become_user: postgres
-#    postgresql_user:
-#      name: zabbix
-#      password: zabbix
-#      state: present
-
-#  - name: create zbx-monitor user
-#    become: yes
-#    become_user: postgres
-#    postgresql_user:
-#      name: zbx_monitor
-#      password: zbx_monitor
-#      state: present
-#      priv: pg_monitor
-#      db: team_sokolov_net
+  - name: Create a new database with name "test"
+    become: true
+    become_user: postgres
+    postgresql_db:
+      name: test
+      owner: test
 
 #  - name: firewall add pgsql service
 #    firewalld:

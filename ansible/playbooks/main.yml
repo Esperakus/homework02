@@ -2,21 +2,21 @@
 - hosts: all
 
   roles:
-    - general-el8
-    - become: yes
+    - { role: general-el8, become: true}
     # - selinux
 
 - hosts: nginx_hosts
 
   roles:
-   - nginx
+   - { role: nginx, become: true}
 
-# - hosts: backend_hosts
+- hosts: db_hosts
 
-#   roles:
-#    - php-fpm_el8
+  roles:
+   - { role: postgresql-ol8, become: true}
 
-# - hosts: db_hosts
 
-#   roles:
-#    - postgresql-ol8
+- hosts: backend_hosts
+
+  roles:
+   - { role: backend, become: true }

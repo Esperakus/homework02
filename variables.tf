@@ -16,10 +16,10 @@ variable "folder_id" {
 variable "image_id" {
   type = string
   # default = "fd8ibluloco5r4ku4bgg" #alma
-  default = "fd816jiq3n13qtli6fh3"
+  default = "fd816jiq3n13qtli6fh3" #centos stream
 }
 
 variable "yc_token" {
   type    = string
-  default = "t1.9euelZqWipOJz5qYmsrMjs3Gkp2Uxu3rnpWans6UkJTKnpuOjYvGjI6NyZLl9PcWFFRj-e8LOFWL3fT3VkJRY_nvCzhVi83n9euelZrLzY2ey5eYyZnJlpOVxp2OmO_9.0U-BeF_la7pwyxli9aSjgiiZ5Q5uV4I8luA8OAk27g-RYZvNIzwYGsnDeNhaxdwAxgg8WcyT2YWtegUU13IVDA"
+  default = "t1.9euelZqOyIzJlcqQmszIjYmLio_JnO3rnpWans6UkJTKnpuOjYvGjI6NyZLl8_cBCDdj-e9aeEVw_d3z90E2NGP571p4RXD9zef1656VmsvNjZ7Ll5jJmcmWk5XGnY6Y7_0.8CnMhAxGe_Ql1w25Td_ChoWv9-eC1SVUJU0Caql9z3Ng161PmttmhGDStE6FhibHosLSywE4EThaMf6qZbm0Cg"
 }

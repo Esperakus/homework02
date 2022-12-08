@@ -1,6 +1,6 @@
 ---
   - name: Add nginx repo
-    become: true
+    # become: true
     yum_repository:
       name: nginx-stable
       description: nginx repo
@@ -10,28 +10,44 @@
       gpgcheck: yes
       enabled: yes
 
+  - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+    seboolean:
+      name: httpd_can_network_connect
+      state: yes
+      persistent: yes
+
   - name: add line to nginx repo
-    become: true
+    # become: true
     lineinfile:
       path: /etc/yum.repos.d/nginx-stable.repo
       line: module_hotfixes=true
       state: present
 
   - name: install nginx
-    become: true
+    # become: true
     yum:
       name: nginx
       state: present
     notify:
       - nginx systemd
 
-  - name: firewall add services
-    become: true
-    firewalld:
-      service: "{{ item }}"
-      permanent: true
-      state: enabled
-      immediate: yes
-    loop:
-      - http
-      - https
+  - name: copy config
+    copy:
+      src: ../files/test.conf
+      dest: /etc/nginx/conf.d/test.conf
+
+  - name: delete default config
+    file:
+      path: /etc/nginx/conf.d/default.conf
+      state: absent
+
+  # - name: firewall add services
+  #   # become: true
+  #   firewalld:
+  #     service: "{{ item }}"
+  #     permanent: true
+  #     state: enabled
+  #     immediate: yes
+  #   loop:
+  #     - http
+  #     - https

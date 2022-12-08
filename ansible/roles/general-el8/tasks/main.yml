@@ -2,32 +2,32 @@
 # tasks file for general
 
   - name: set timezone msk
-    become: true
+    # become: true
     timezone:
       name: Europe/Moscow
 
   - name: Import EPEL GPG key.
-    become: true
+    # become: true
     rpm_key:
       key: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}"      
       state: present
 
   - name: Install EPEL repo.
-    become: true
+    # become: true
     yum:
       name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
       state: present
     register: result
 
   - name: Upgrade all
-    become: true
+    # become: true
     yum:
       name: '*'
       state: latest
       update_cache: true
 
   - name: Install packages
-    become: true
+    # become: true
     yum:
       name: "{{ packages }} "
       state: present
@@ -65,5 +65,6 @@
         - iftop
         - atop
         - vim
-        - python3-firewall
+        # - python3-firewall
         - iotop
+        - glibc-langpack-ru
