@@ -305,34 +305,3 @@ output "internal_ip_address_backend" {
 output "internal_ip_address_db" {
   value = yandex_compute_instance.db.*.network_interface.0.ip_address
 }
-
-# resource "null_resource" "copy_ansible" {
-#   depends_on = [
-#     yandex_compute_instance.nginx,
-#     yandex_compute_instance.php-fpm,
-#     yandex_compute_instance.db,
-#     yandex_compute_instance.ansible
-#   ]
-
-#   provisioner "local-exec" {
-#     command = "rsync -avzhP ./ansible/ ${yandex_compute_instance.ansible.network_interface.0.nat_ip_address}:/root/ansible/"
-#   }
-# }
-
-# resource "null_resource" "start_ansible" {
-#   depends_on = [
-#     null_resource.copy_ansible
-#   ]
-
-#   connection {
-#     type        = "ssh"
-#     user        = "cloud-user"
-#     private_key = tls_private_key.ssh.private_key_pem
-#     host        = yandex_compute_instance.ansible.network_interface.0.nat_ip_address
-#   }
-#   provisioner "remote-exec" {
-#     inline = [
-#       "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /home/cloud-user/ansible/hosts -u cloud-user /home/cloud-user/ansible/general.yml"
-#     ]
-#   }
-# }
