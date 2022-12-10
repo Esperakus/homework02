@@ -34,7 +34,7 @@ func hello(w http.ResponseWriter, req *http.Request) {
 	rows, err := db.Query(`SELECT version();`)
 	CheckError(err)
 
-	defer rows.Close()
+	defer db.Close()
 	for rows.Next() {
 		var db_version string
 
@@ -45,7 +45,7 @@ func hello(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, name)
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, db_version)
-
+		db.Close()
 	}
 }
 

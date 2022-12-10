@@ -156,7 +156,7 @@ resource "yandex_compute_instance" "nginx" {
 
   network_interface {
     subnet_id = yandex_vpc_subnet.subnet01.id
-    nat       = true
+    # nat       = true
   }
 
   metadata = {
@@ -219,19 +219,6 @@ resource "yandex_compute_instance" "db" {
   }
 }
 
-# resource "null_resource" "copy_inventory" {
-
-# 	triggers = {
-# 		mytest = timestamp()
-# 	}
-
-# 	provisioner "local-exec" {
-# 	    command = "scp -i id_rsa ./ansible/hosts cloud-user@${external_ip_address_vm}:/home/cloud-user/ansible/"
-
-
-# 	  }
-#}
-
 resource "yandex_vpc_network" "net01" {
   name = "net01"
 }
@@ -259,6 +246,44 @@ resource "yandex_vpc_route_table" "rt" {
   }
 }
 
+resource "yandex_lb_target_group" "nginx" {
+  name = "nginx-workers-tadget"
+
+  target {
+    subnet_id = yandex_vpc_subnet.subnet01.id
+    address   = yandex_compute_instance.nginx.0.network_interface.0.ip_address
+  }
+
+  target {
+    subnet_id = yandex_vpc_subnet.subnet01.id
+    address   = yandex_compute_instance.nginx.1.network_interface.0.ip_address
+  }
+
+  depends_on = [
+    yandex_compute_instance.nginx
+  ]
+}
+
+resource "yandex_lb_network_load_balancer" "lb01" {
+  name = "nlb01"
+  listener {
+    name = "listener01"
+    port = 80
+    external_address_spec {
+      ip_version = "ipv4"
+    }
+  }
+  attached_target_group {
+    target_group_id = yandex_lb_target_group.nginx.id
+    healthcheck {
+      name = "healthchecker01"
+      http_options {
+        port = 80
+      }
+      interval = 2
+    }
+  }
+}
 
 output "external_ip_address_ansible" {
   value = yandex_compute_instance.ansible.*.network_interface.0.nat_ip_address
@@ -268,8 +293,8 @@ output "internal_ip_address_nginx" {
   value = yandex_compute_instance.nginx.*.network_interface.0.ip_address
 }
 
-output "external_ip_address_nginx" {
-  value = yandex_compute_instance.nginx.*.network_interface.0.nat_ip_address
+output "external_ip_address_lb" {
+  value = yandex_lb_network_load_balancer.lb01.listener.*
 }
 
 output "internal_ip_address_backend" {
