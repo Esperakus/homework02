@@ -57,7 +57,7 @@ curl http://51.250.84.78
 ```
 в выводе увидим:
 ```
-backend0.ru-central1.internal
+backend0.ru-central0.internal
 PostgreSQL 13.9 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-15), 64-bit
 ```
 или
